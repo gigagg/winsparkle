@@ -23,6 +23,7 @@
  *
  */
 
+#ifndef NO_UI
 #include "ui.h"
 #include "settings.h"
 #include "error.h"
@@ -1570,3 +1571,84 @@ void UI::AskForPermission()
 }
 
 } // namespace winsparkle
+
+#else
+
+#include "ui.h"
+#include "settings.h"
+#include "error.h"
+#include "updatechecker.h"
+#include "updatedownloader.h"
+#include "appcontroller.h"
+
+namespace winsparkle
+{
+
+HINSTANCE UI::ms_hInstance = nullptr;
+
+UI::UI() : Thread("WinSparkle UI thread") {}
+
+void UI::Run() {}
+
+/*static*/
+void UI::ShutDown()
+{}
+
+/*static*/
+void UI::NotifyNoUpdates(bool installAutomatically)
+{
+    ApplicationController::NotifyUpdateNotFound();
+}
+
+/*static*/
+void UI::NotifyUpdateAvailable(const Appcast& info, bool installAutomatically)
+{
+    ApplicationController::NotifyUpdateFound();
+    UpdateDownloader* downloader = new UpdateDownloader(info);
+    downloader->Start();
+    downloader->Join();
+}
+
+/*static*/
+void UI::NotifyDownloadProgress(size_t downloaded, size_t total)
+{}
+
+/*static*/
+void UI::NotifyUpdateDownloaded(const std::wstring& updateFile, const Appcast &appcast)
+{
+    std::wstring wArgs;
+
+    SHELLEXECUTEINFO sei;
+    ::ZeroMemory(&sei, sizeof(SHELLEXECUTEINFO));
+    sei.cbSize = sizeof(SHELLEXECUTEINFO);
+    sei.lpFile = updateFile.c_str();
+    sei.nShow = SW_SHOWDEFAULT;
+    sei.fMask = SEE_MASK_FLAG_NO_UI;	// We display our own dialog box on error
+
+    if (!appcast.InstallerArguments.empty())
+    {
+        wArgs = AnsiToWide(appcast.InstallerArguments);
+        sei.lpParameters = wArgs.c_str();
+    }
+
+    ::ShellExecuteEx(&sei);
+}
+
+/*static*/
+void UI::NotifyUpdateError()
+{}
+
+/*static*/
+void UI::ShowCheckingUpdates()
+{}
+
+/*static*/
+void UI::AskForPermission()
+{
+    UpdateChecker* check = new UpdateChecker();
+    check->Start();
+    check->Join();
+}
+
+} // namespace winsparkle
+#endif
