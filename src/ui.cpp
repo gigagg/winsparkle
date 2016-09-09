@@ -1632,6 +1632,11 @@ void UI::NotifyUpdateDownloaded(const std::wstring& updateFile, const Appcast &a
     }
 
     ::ShellExecuteEx(&sei);
+
+    if (!ApplicationController::IsReadyToShutdown())
+    {
+        ApplicationController::RequestShutdown();
+    }
 }
 
 /*static*/
