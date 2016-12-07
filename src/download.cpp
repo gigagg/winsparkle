@@ -47,17 +47,41 @@ namespace
 
 struct InetHandle
 {
-    InetHandle(HINTERNET handle) : m_handle(handle) {}
+    InetHandle(HINTERNET handle = 0) : m_handle(handle), m_callback(NULL) {}
 
     ~InetHandle()
     {
-        if ( m_handle )
+        Close();
+    }
+
+    InetHandle& operator=(HINTERNET handle)
+    {
+        Close();
+        m_handle = handle;
+        return *this;
+    }
+
+    void SetStatusCallback(INTERNET_STATUS_CALLBACK callback)
+    {
+        m_callback = callback;
+        InternetSetStatusCallback(m_handle, m_callback);
+    }
+
+    void Close()
+    {
+        if (m_handle)
+        {
+            if (m_callback)
+                InternetSetStatusCallback(m_handle, NULL);
             InternetCloseHandle(m_handle);
+            m_handle = NULL;
+        }
     }
 
     operator HINTERNET() const { return m_handle; }
 
     HINTERNET m_handle;
+    INTERNET_STATUS_CALLBACK m_callback;
 };
 
 std::wstring MakeUserAgent()
@@ -99,11 +123,55 @@ bool GetHttpHeader(HINTERNET handle, DWORD whatToGet, DWORD& output)
            ) == TRUE;
 }
 
-std::wstring GetURLFileName(const URL_COMPONENTSA& urlc)
+
+std::wstring GetURLFileName(const char *url)
 {
-    const char *lastSlash = strrchr(urlc.lpszUrlPath, '/');
-    const std::string fn(lastSlash ? lastSlash + 1 : urlc.lpszUrlPath);
+    const char *lastSlash = strrchr(url, '/');
+    const std::string fn(lastSlash ? lastSlash + 1 : url);
     return AnsiToWide(fn);
+}
+
+struct DownloadCallbackContext
+{
+    DownloadCallbackContext(InetHandle *conn_) : conn(conn_) {}
+    InetHandle *conn;
+    Event eventRequestComplete;
+};
+
+void CALLBACK DownloadInternetStatusCallback(_In_ HINTERNET hInternet,
+                                             _In_ DWORD_PTR dwContext,
+                                             _In_ DWORD     dwInternetStatus,
+                                             _In_ LPVOID    lpvStatusInformation,
+                                             _In_ DWORD     dwStatusInformationLength)
+{
+    DownloadCallbackContext *context = (DownloadCallbackContext*)dwContext;
+    INTERNET_ASYNC_RESULT *res = (INTERNET_ASYNC_RESULT*)lpvStatusInformation;
+
+    switch (dwInternetStatus)
+    {
+        case INTERNET_STATUS_HANDLE_CREATED:
+            context->conn->m_handle = (HINTERNET)(res->dwResult);
+            break;
+
+        case INTERNET_STATUS_REQUEST_COMPLETE:
+            context->eventRequestComplete.Signal();
+            break;
+
+        case INTERNET_STATUS_CONNECTION_CLOSED:
+            context->conn->Close();
+            break;
+    }
+}
+
+void WaitUntilSignaledWithTerminationCheck(Event& event, Thread *thread)
+{
+    for (;;)
+    {
+        if (thread)
+            thread->CheckShouldTerminate();
+        if (event.WaitUntilSignaled(100))
+            return;
+    }
 }
 
 } // anonymous namespace
@@ -113,9 +181,9 @@ std::wstring GetURLFileName(const URL_COMPONENTSA& urlc)
                                 public functions
  *--------------------------------------------------------------------------*/
 
-void DownloadFile(const std::string& url, IDownloadSink *sink, int flags)
+void DownloadFile(const std::string& url, IDownloadSink *sink, Thread *onThread, int flags)
 {
-    char url_path[512];
+    char url_path[2048];
     URL_COMPONENTSA urlc;
     memset(&urlc, 0, sizeof(urlc));
     urlc.dwStructSize = sizeof(urlc);
@@ -131,7 +199,7 @@ void DownloadFile(const std::string& url, IDownloadSink *sink, int flags)
                           INTERNET_OPEN_TYPE_PRECONFIG,
                           NULL, // lpszProxyName
                           NULL, // lpszProxyBypass
-                          0     // dwFlags
+                          INTERNET_FLAG_ASYNC // dwFlags
                       );
     if ( !inet )
         throw Win32Exception();
@@ -142,19 +210,34 @@ void DownloadFile(const std::string& url, IDownloadSink *sink, int flags)
     if ( urlc.nScheme == INTERNET_SCHEME_HTTPS )
         dwFlags |= INTERNET_FLAG_SECURE;
 
-    InetHandle conn = InternetOpenUrlA
-                      (
-                          inet,
-                          url.c_str(),
-                          NULL, // lpszHeaders
-                          -1,   // dwHeadersLength
-                          dwFlags,
-                          (DWORD_PTR)NULL  // dwContext
-                      );
-    if ( !conn )
-        throw Win32Exception();
+    InetHandle conn;
 
-    char buffer[10240];
+    DownloadCallbackContext context(&conn);
+    inet.SetStatusCallback(&DownloadInternetStatusCallback);
+
+    HINTERNET conn_raw = InternetOpenUrlA
+                         (
+                             inet,
+                             url.c_str(),
+                             NULL, // lpszHeaders
+                             -1,   // dwHeadersLength
+                             dwFlags,
+                             (DWORD_PTR)&context  // dwContext
+                         );
+    // InternetOpenUrl() may return NULL handle and then fill it in asynchronously from 
+    // DownloadInternetStatusCallback. We must make sure we don't overwrite the handle
+    // in that case, or throw an error.
+    if (conn_raw)
+    {
+        conn = conn_raw;
+    }
+    else
+    {
+        if (GetLastError() != ERROR_IO_PENDING)
+            throw Win32Exception();
+    }
+
+    WaitUntilSignaledWithTerminationCheck(context.eventRequestComplete, onThread);
 
     // Check returned status code - we need to detect 404 instead of
     // downloading the human-readable 404 page:
@@ -206,20 +289,51 @@ void DownloadFile(const std::string& url, IDownloadSink *sink, int flags)
 
     if ( !filename_set )
     {
-        sink->SetFilename(GetURLFileName(urlc));
+        DWORD ousize = 0;
+        InternetQueryOptionA(conn, INTERNET_OPTION_URL, NULL, &ousize);
+        if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+        {
+            DataBuffer<char> optionurl(ousize);
+            if ( InternetQueryOptionA(conn, INTERNET_OPTION_URL, optionurl, &ousize) )
+                sink->SetFilename(GetURLFileName(optionurl));
+            else
+                sink->SetFilename(GetURLFileName(urlc.lpszUrlPath));
+        }
+        else
+        {
+            sink->SetFilename(GetURLFileName(urlc.lpszUrlPath));
+        }
     }
 
     // Download the data:
+    char buffer[10240];
     for ( ;; )
     {
-        DWORD read;
-        if ( !InternetReadFile(conn, buffer, sizeof(buffer), &read) )
-            throw Win32Exception();
+        INTERNET_BUFFERS ibuf = { 0 };
+        ibuf.dwStructSize = sizeof(ibuf);
+        ibuf.lpvBuffer = buffer;
+        ibuf.dwBufferLength = sizeof(buffer);
 
-        if ( read == 0 )
-            break; // all of the file was downloaded
+        if (!InternetReadFileEx(conn, &ibuf, IRF_ASYNC | IRF_NO_WAIT, NULL))
+        {
+            if (GetLastError() != ERROR_IO_PENDING)
+                throw Win32Exception();
 
-        sink->Add(buffer, read);
+            WaitUntilSignaledWithTerminationCheck(context.eventRequestComplete, onThread);
+            continue;
+        }
+
+        if (ibuf.dwBufferLength == 0)
+        {
+            // This check is required in case the INTERNET_STATUS_CONNECTION_CLOSED event was 
+            // received (and the handle was closed) during the call to InternetReadFileEx()
+            if (!conn)
+                throw Win32Exception();
+            else
+                break; // all of the file was downloaded
+        }
+
+        sink->Add(ibuf.lpvBuffer, ibuf.dwBufferLength);
     }
 }
 

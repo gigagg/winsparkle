@@ -46,7 +46,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;WIN32;_DEBUG;_LIB"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -57,7 +57,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;_UNICODE;UNICODE;_DEBUG"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;_UNICODE;UNICODE;_DEBUG"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -111,7 +111,7 @@
 				AdditionalOptions="/MP"
 				Optimization="1"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -126,7 +126,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;_UNICODE;UNICODE;NDEBUG"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;_UNICODE;UNICODE;NDEBUG"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -179,7 +179,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;WIN32;_DEBUG;_LIB"
 				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -190,7 +190,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;_UNICODE;UNICODE;_DEBUG"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;_UNICODE;UNICODE;_DEBUG"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -244,7 +244,7 @@
 				AdditionalOptions="/MP"
 				Optimization="1"
 				EnableIntrinsicFunctions="true"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
@@ -259,7 +259,7 @@
 			/>
 			<Tool
 				Name="VCResourceCompilerTool"
-				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILED_FROM_DSP;_UNICODE;UNICODE;NDEBUG"
+				PreprocessorDefinitions="_CRT_SECURE_NO_WARNINGS;COMPILING_FOR_WINDOWS;_UNICODE;UNICODE;NDEBUG"
 			/>
 			<Tool
 				Name="VCPreLinkEventTool"
@@ -296,23 +296,23 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="expat\lib\xmlparse.c"
+				RelativePath="expat\expat\lib\xmlparse.c"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\xmlrole.c"
+				RelativePath="expat\expat\lib\xmlrole.c"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\xmltok.c"
+				RelativePath="expat\expat\lib\xmltok.c"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\xmltok_impl.c"
+				RelativePath="expat\expat\lib\xmltok_impl.c"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\xmltok_ns.c"
+				RelativePath="expat\expat\lib\xmltok_ns.c"
 				>
 			</File>
 		</Filter>
@@ -322,55 +322,55 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="expat\lib\ascii.h"
+				RelativePath="expat\expat\lib\ascii.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\asciitab.h"
+				RelativePath="expat\expat\lib\asciitab.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\expat.h"
+				RelativePath="expat\expat\lib\expat.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\expat_external.h"
+				RelativePath="expat\expat\lib\expat_external.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\iasciitab.h"
+				RelativePath="expat\expat\lib\iasciitab.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\internal.h"
+				RelativePath="expat\expat\lib\internal.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\latin1tab.h"
+				RelativePath="expat\expat\lib\latin1tab.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\nametab.h"
+				RelativePath="expat\expat\lib\nametab.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\utf8tab.h"
+				RelativePath="expat\expat\lib\utf8tab.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\winconfig.h"
+				RelativePath="expat\expat\lib\winconfig.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\xmlrole.h"
+				RelativePath="expat\expat\lib\xmlrole.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\xmltok.h"
+				RelativePath="expat\expat\lib\xmltok.h"
 				>
 			</File>
 			<File
-				RelativePath="expat\lib\xmltok_impl.h"
+				RelativePath="expat\expat\lib\xmltok_impl.h"
 				>
 			</File>
 		</Filter>

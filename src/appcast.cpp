@@ -154,7 +154,7 @@ void XMLCALL OnStartElement(void *data, const char *name, const char **attrs)
         }
         else if (strcmp(name, NODE_ENCLOSURE) == 0)
         {
-            const int size = ctxt.items.size();
+            const size_t size = ctxt.items.size();
             for ( int i = 0; attrs[i]; i += 2 )
             {
                 const char *name = attrs[i];
@@ -206,33 +206,36 @@ void XMLCALL OnEndElement(void *data, const char *name)
 {
     ContextData& ctxt = *static_cast<ContextData*>(data);
 
-    if ( ctxt.in_item && strcmp(name, NODE_RELNOTES) == 0 )
+    if (ctxt.in_item)
     {
-        ctxt.in_relnotes--;
-    }
-    else if ( ctxt.in_item && strcmp(name, NODE_TITLE) == 0 )
-    {
-        ctxt.in_title--;
-    }
-    else if ( ctxt.in_item && strcmp(name, NODE_DESCRIPTION) == 0 )
-    {
-        ctxt.in_description--;
-    }
-    else if ( ctxt.in_item && strcmp(name, NODE_MIN_OS_VERSION) == 0 )
-    {
-        ctxt.in_min_os_version--;
-    }
-    else if ( ctxt.in_link && strcmp(name, NODE_LINK) == 0 )
-    {
-        ctxt.in_link--;
-    }
-    else if ( ctxt.in_link && strcmp(name, NODE_VERSION) == 0 )
-    {
-        ctxt.in_version--;
-    }
-    else if ( ctxt.in_shortversion && strcmp(name, NODE_SHORTVERSION) == 0 )
-    {
-        ctxt.in_shortversion--;
+        if (strcmp(name, NODE_RELNOTES) == 0)
+        {
+            ctxt.in_relnotes--;
+        }
+        else if (strcmp(name, NODE_TITLE) == 0)
+        {
+            ctxt.in_title--;
+        }
+        else if (strcmp(name, NODE_DESCRIPTION) == 0)
+        {
+            ctxt.in_description--;
+        }
+        else if (strcmp(name, NODE_MIN_OS_VERSION) == 0)
+        {
+            ctxt.in_min_os_version--;
+        }
+        else if (strcmp(name, NODE_LINK) == 0)
+        {
+            ctxt.in_link--;
+        }
+        else if (strcmp(name, NODE_VERSION) == 0)
+        {
+            ctxt.in_version--;
+        }
+        else if (strcmp(name, NODE_SHORTVERSION) == 0)
+        {
+            ctxt.in_shortversion--;
+        }
     }
     else if (ctxt.in_channel && strcmp(name, NODE_ITEM) == 0)
     {
@@ -240,7 +243,7 @@ void XMLCALL OnEndElement(void *data, const char *name)
         if (is_suitable_windows_item(ctxt.items[ctxt.items.size() - 1]))
             XML_StopParser(ctxt.parser, XML_TRUE);
     }
-    else if ( strcmp(name, NODE_CHANNEL) == 0 )
+    else if (strcmp(name, NODE_CHANNEL) == 0 )
     {
         ctxt.in_channel--;
         // we've reached the end of <channel> element,
@@ -253,7 +256,7 @@ void XMLCALL OnEndElement(void *data, const char *name)
 void XMLCALL OnText(void *data, const char *s, int len)
 {
     ContextData& ctxt = *static_cast<ContextData*>(data);
-    const int size = ctxt.items.size();
+    const size_t size = ctxt.items.size();
 
     if ( ctxt.in_relnotes )
         ctxt.items[size-1].ReleaseNotesURL.append(s, len);
@@ -290,7 +293,7 @@ Appcast Appcast::Load(const std::string& xml)
     XML_SetElementHandler(p, OnStartElement, OnEndElement);
     XML_SetCharacterDataHandler(p, OnText);
 
-    XML_Status st = XML_Parse(p, xml.c_str(), xml.size(), XML_TRUE);
+    XML_Status st = XML_Parse(p, xml.c_str(), (int)xml.size(), XML_TRUE);
 
     if ( st == XML_STATUS_ERROR )
     {
