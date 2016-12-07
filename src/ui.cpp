@@ -1631,12 +1631,12 @@ void UI::NotifyUpdateDownloaded(const std::wstring& updateFile, const Appcast &a
         sei.lpParameters = wArgs.c_str();
     }
 
-    ::ShellExecuteEx(&sei);
-
-    if (!ApplicationController::IsReadyToShutdown())
+    if (ApplicationController::IsReadyToShutdown())
     {
         ApplicationController::RequestShutdown();
     }
+
+    ::ShellExecuteEx(&sei);
 }
 
 /*static*/
